@@ -1,18 +1,22 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-public class SuperUserAndStaffAuthorizationFilter : IAuthorizationFilter
+namespace AdaTech.Delivery.WebAPI.Utilities.Filter
 {
-    public void OnAuthorization(AuthorizationFilterContext context)
+    public class SuperUserAndStaffAuthorizationFilter : IAuthorizationFilter
     {
-        var user = context.HttpContext.User;
-
-        bool isSuperUser = user.Claims.Any(c => c.Type == "IsSuperUser" && c.Value == "True");
-        bool isStaff = user.Claims.Any(c => c.Type == "IsStaff" && c.Value == "True");
-
-        if (!isSuperUser || !isStaff)
+        public void OnAuthorization(AuthorizationFilterContext context)
         {
-            context.Result = new ForbidResult();
+            var user = context.HttpContext.User;
+
+            bool isSuperUser = user.Claims.Any(c => c.Type == "IsSuperUser" && c.Value == "True");
+            bool isStaff = user.Claims.Any(c => c.Type == "IsStaff" && c.Value == "True");
+            bool isActivated = user.Claims.Any(c => c.Type == "IsActive" && c.Value == "True");
+
+            if (!isSuperUser || !isStaff || !isActivated)
+            {
+                context.Result = new ForbidResult();
+            }
         }
     }
 }

@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using AdaTech.Delivery.WebAPI.Utilities.Filter;
+using System.Text.Json;
+using AdaTech.Delivery.WebAPI.Utilities.Middlewares;
+using AdaTech._LoginMiddleware.WebAPI.Utilities.Middleware;
 
 namespace AdaTech.Delivery.WebAPI
 {
@@ -14,19 +17,60 @@ namespace AdaTech.Delivery.WebAPI
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    options.TokenValidationParameters = new TokenValidationParameters
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
                     {
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                        ValidAudience = builder.Configuration["Jwt:Audience"],
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-                    };
-                });
+                        return Task.CompletedTask;
+                    },
+                    OnChallenge = context =>
+                    {
+                        if (!context.Handled)
+                        {
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            context.Response.ContentType = "application/json";
+
+                            var errorResponse = new
+                            {
+                                StatusCode = context.Response.StatusCode,
+                                Message = "Você não está autorizado a acessar este recurso."
+                            };
+
+                            context.Response.WriteAsJsonAsync(errorResponse);
+                            context.HandleResponse();
+                        }
+                        return Task.CompletedTask;
+                    },
+                    OnForbidden = context =>
+                    {
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        context.Response.ContentType = "application/json";
+
+                        var errorResponse = new
+                        {
+                            StatusCode = context.Response.StatusCode,
+                            Message = "Acesso negado a este recurso."
+                        };
+
+                        context.Response.WriteAsJsonAsync(errorResponse);
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
@@ -60,6 +104,7 @@ namespace AdaTech.Delivery.WebAPI
             app.UseAuthentication(); 
             app.UseAuthorization();
 
+            app.UseMiddleware<QueryValidationMiddleware>();
             app.UseMiddleware<ExceptionMiddleware>();
 
             app.MapControllers();

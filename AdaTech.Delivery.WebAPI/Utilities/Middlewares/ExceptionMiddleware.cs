@@ -1,66 +1,60 @@
-﻿using System.Text.Json;
-using Microsoft.IdentityModel.Tokens;
+﻿
 using System.Security.Authentication;
 
-public class ExceptionMiddleware
+
+namespace AdaTech.Delivery.WebAPI.Utilities.Middlewares
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<ExceptionMiddleware> _logger;
-
-    public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
+    public class ExceptionMiddleware
     {
-        _next = next;
-        _logger = logger;
-    }
+        private readonly RequestDelegate _next;
+        private readonly ILogger<ExceptionMiddleware> _logger;
 
-    public async Task InvokeAsync(HttpContext httpContext)
-    {
-        try
+        public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
         {
-            await _next(httpContext);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Algo de errado aconteceu: {ex}");
-            await HandleExceptionAsync(httpContext, ex);
-        }
-    }
-
-    private static Task HandleExceptionAsync(HttpContext context, Exception exception)
-    {
-        context.Response.ContentType = "application/json";
-
-        var statusCode = StatusCodes.Status500InternalServerError;
-        var message = "Um erro inesperado aconteceu durante a execução.";
-
-        switch (exception)
-        {
-            case SecurityTokenExpiredException:
-                statusCode = StatusCodes.Status401Unauthorized;
-                message = "Token de autenticação expirado.";
-                break;
-            case SecurityTokenException:
-                statusCode = StatusCodes.Status401Unauthorized;
-                message = "Token de autenticação inválido.";
-                break;
-            case AuthenticationException:
-                statusCode = StatusCodes.Status401Unauthorized;
-                message = "Erro de autenticação.";
-                break;
-            case UnauthorizedAccessException:
-                statusCode = StatusCodes.Status403Forbidden;
-                message = "Acesso negado.";
-                break;
+            _next = next;
+            _logger = logger;
         }
 
-        context.Response.StatusCode = statusCode;
-
-        var errorResponse = new
+        public async Task InvokeAsync(HttpContext httpContext)
         {
-            StatusCode = statusCode,
-            Message = message
-        };
+            int originalStatusCode = httpContext.Response.StatusCode;
 
-        return context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse));
+            try
+            {
+                await _next(httpContext);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Algo de errado aconteceu: {ex}");
+                await HandleExceptionAsync(httpContext, ex);
+            }
+        }
+
+        private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
+        {
+            context.Response.ContentType = "application/json";
+
+            var statusCode = exception switch
+            {
+                KeyNotFoundException _ => StatusCodes.Status404NotFound,
+                AuthenticationException _ => StatusCodes.Status401Unauthorized,
+                UnauthorizedAccessException _ => StatusCodes.Status403Forbidden,
+                _ => StatusCodes.Status500InternalServerError
+            };
+
+            var message = exception.Message;
+
+            context.Response.StatusCode = statusCode;
+
+            var errorResponse = new
+            {
+                StatusCode = statusCode,
+                Message = message
+            };
+
+            await context.Response.WriteAsJsonAsync(errorResponse);
+        }
+
     }
 }
+

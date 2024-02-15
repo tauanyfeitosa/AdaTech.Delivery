@@ -7,6 +7,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
+using AdaTech.Delivery.WebAPI.Utilities.Filter;
+using System.Runtime.CompilerServices;
 
 namespace AdaTech.Delivery.WebAPI.Controllers
 {
@@ -35,15 +37,12 @@ namespace AdaTech.Delivery.WebAPI.Controllers
         [HttpPost]
         public IActionResult PostDeliveryMan([FromBody] DeliveryManRequest deliveryManRequest)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
 
             var deliveryMan = _deliveryManService.CreateDeliveryMan(deliveryManRequest);
 
             return CreatedAtAction(nameof(GetDeliveryMan), new { id = deliveryMan.Id }, deliveryMan);
         }
+
 
         [HttpGet("byCPF")]
         public IActionResult GetDeliveryMan(string cpf)
@@ -51,13 +50,15 @@ namespace AdaTech.Delivery.WebAPI.Controllers
             var deliveryMan = _deliveryManService.GetDeliveryManByCPF(cpf);
             if (deliveryMan == null)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Nenhum entregador encontrado com o CPF: {cpf}.");
             }
             return Ok(deliveryMan);
         }
 
+
         [Authorize]
         [HttpPost("testMiddleware")]
+        [TypeFilter(typeof(SuperUserAndStaffAuthorizationFilter))]
         public IActionResult TestMiddleware([FromQuery] bool test)
         {
             if (test)
@@ -71,15 +72,16 @@ namespace AdaTech.Delivery.WebAPI.Controllers
         [HttpGet("login")]
         public IActionResult Login([FromQuery] string cpf, [FromQuery] string senha)
         {
+
             var deliveryMan = _deliveryManService.GetDeliveryManByCPF(cpf);
             if (deliveryMan == null)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Nenhum entregador encontrado com o CPF: {cpf}.");
             }
 
             if (deliveryMan.Senha != senha)
             {
-                return Unauthorized();
+                throw new UnauthorizedAccessException("Senha incorreta.");
             }
 
             deliveryMan.IsLogged = true;
@@ -103,6 +105,11 @@ namespace AdaTech.Delivery.WebAPI.Controllers
                 signingCredentials: creds);
 
             var encodedToken = new JwtSecurityTokenHandler().WriteToken(token);
+
+            if (string.IsNullOrEmpty(encodedToken))
+            {
+                throw new InvalidOperationException("Não foi possível gerar o token de autenticação.");
+            }
 
             return Ok(new { token = encodedToken });
         }
