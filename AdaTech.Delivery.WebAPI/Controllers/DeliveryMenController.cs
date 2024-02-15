@@ -2,6 +2,11 @@
 using AdaTech.Delivery.Library.ModelsBuilding;
 using AdaTech.Delivery.Library.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AdaTech.Delivery.WebAPI.Controllers
 {
@@ -10,13 +15,17 @@ namespace AdaTech.Delivery.WebAPI.Controllers
     public class DeliveryMenController : ControllerBase
     {
         private readonly DeliveryManService _deliveryManService;
+        private readonly IConfiguration _configuration;
 
-        public DeliveryMenController(DeliveryManService deliveryManService)
+        public DeliveryMenController(DeliveryManService deliveryManService, IConfiguration configuration)
         {
             _deliveryManService = deliveryManService;
+            _configuration = configuration;
         }
 
+        [Authorize]
         [HttpGet]
+        [TypeFilter(typeof(SuperUserAndStaffAuthorizationFilter))]
         public IActionResult GetAllDeliveryMen()
         {
             var deliveryMen = _deliveryManService.GetAllDeliveryMen();
@@ -31,17 +40,7 @@ namespace AdaTech.Delivery.WebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var deliveryMan = new DeliveryMan
-            {
-                Name = deliveryManRequest.Name,
-                LastName = deliveryManRequest.LastName,
-                Email = deliveryManRequest.Email,
-                PhoneNumber = deliveryManRequest.PhoneNumber,
-                CPF = deliveryManRequest.CPF,
-                DateBirth = deliveryManRequest.DateBirth,
-            };
-
-            _deliveryManService.AddDeliveryMan(deliveryMan);
+            var deliveryMan = _deliveryManService.CreateDeliveryMan(deliveryManRequest);
 
             return CreatedAtAction(nameof(GetDeliveryMan), new { id = deliveryMan.Id }, deliveryMan);
         }
@@ -56,5 +55,57 @@ namespace AdaTech.Delivery.WebAPI.Controllers
             }
             return Ok(deliveryMan);
         }
+
+        [Authorize]
+        [HttpPost("testMiddleware")]
+        public IActionResult TestMiddleware([FromQuery] bool test)
+        {
+            if (test)
+            {
+                return Ok("Middleware testado com sucesso!");
+            }
+
+            throw new System.Exception("teste de erro!");
+        }
+
+        [HttpGet("login")]
+        public IActionResult Login([FromQuery] string cpf, [FromQuery] string senha)
+        {
+            var deliveryMan = _deliveryManService.GetDeliveryManByCPF(cpf);
+            if (deliveryMan == null)
+            {
+                return NotFound();
+            }
+
+            if (deliveryMan.Senha != senha)
+            {
+                return Unauthorized();
+            }
+
+            deliveryMan.IsLogged = true;
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, deliveryMan.Name),
+                new Claim(ClaimTypes.Role, "DeliveryMan"),
+                new Claim("IsSuperUser", deliveryMan.IsSuperUser.ToString()),
+                new Claim("IsStaff", deliveryMan.IsStaff.ToString())
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(30),
+                signingCredentials: creds);
+
+            var encodedToken = new JwtSecurityTokenHandler().WriteToken(token);
+
+            return Ok(new { token = encodedToken });
+        }
+
     }
 }

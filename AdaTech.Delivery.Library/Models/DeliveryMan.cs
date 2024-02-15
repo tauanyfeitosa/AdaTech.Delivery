@@ -14,10 +14,12 @@ namespace AdaTech.Delivery.Library.Models
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
         public string CPF { get; set; }
+        public string Senha { get; set; }
         public DateTime DateBirth { get; set; }
         public bool IsSuperUser { get; set; } = false;
         public bool IsDeliveryMan { get; set; } = true;
         public bool IsStaff { get; set; } = false;
         public bool IsActive { get; set; } = true;
+        public bool IsLogged { get; set; } = false;
     }
 }

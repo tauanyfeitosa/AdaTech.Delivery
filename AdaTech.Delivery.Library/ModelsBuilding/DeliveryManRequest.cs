@@ -29,9 +29,15 @@ namespace AdaTech.Delivery.Library.ModelsBuilding
         [StringLength(20, ErrorMessage = "O número de telefone não pode ter mais de 20 dígitos.")]
         public string? PhoneNumber { get; set; }
 
+        [Required(ErrorMessage = "O CPF é obrigatório.")]
         [RegularExpression(@"^\d{3}\.\d{3}\.\d{3}-\d{2}$", ErrorMessage = "Formato de CPF inválido.")]
         public string CPF { get; set; }
 
+        [Required(ErrorMessage = "A senha é obrigatória.")]
+        [SenhaAtributte(ErrorMessage = "A senha deve ter no mínimo 8 caracteres, uma letra maiúscula, uma letra minúscula e um número.")]
+        public string? Senha { get; set; }
+
+        [Required(ErrorMessage = "A data de nascimento é obrigatória.")]
         [DataType(DataType.Date, ErrorMessage = "Formato de data inválido.")]
         [MaiorDeIdade(ErrorMessage = "Você deve ser maior de 18 anos.")]
         public DateTime DateBirth { get; set; }

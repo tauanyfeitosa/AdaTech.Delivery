@@ -1,4 +1,5 @@
 ﻿using AdaTech.Delivery.Library.Models;
+using AdaTech.Delivery.Library.ModelsBuilding;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,7 @@ namespace AdaTech.Delivery.Library.Services
                 Email = "joao.silva@email.com",
                 PhoneNumber = "55999999999",
                 CPF = "123.456.789-09",
+                Senha = "Senha123",
                 DateBirth = new DateTime(1985, 7, 23),
                 IsSuperUser = true,
                 IsDeliveryMan = true,
@@ -33,6 +35,7 @@ namespace AdaTech.Delivery.Library.Services
                 Email = "maria.fernandes@email.com",
                 PhoneNumber = "55888888888",
                 CPF = "987.654.321-00",
+                Senha = "Senha123",
                 DateBirth = new DateTime(1990, 5, 19),
                 IsSuperUser = true,
                 IsDeliveryMan = true,
@@ -47,6 +50,7 @@ namespace AdaTech.Delivery.Library.Services
                 Email = "pedro.goncalves@email.com",
                 PhoneNumber = "55777777777",
                 CPF = "111.222.333-44",
+                Senha = "Senha123",
                 DateBirth = new DateTime(1978, 1, 15),
                 IsSuperUser = false,
                 IsDeliveryMan = true,
@@ -60,6 +64,11 @@ namespace AdaTech.Delivery.Library.Services
             return _deliveryMen;
         }
 
+        public int CreateId()
+        {
+            return _deliveryMen.Max(x => x.Id) + 1; 
+        }
+
         public void AddDeliveryMan(DeliveryMan deliveryMan)
         {
             _deliveryMen.Add(deliveryMan);
@@ -68,6 +77,26 @@ namespace AdaTech.Delivery.Library.Services
         public DeliveryMan GetDeliveryManByCPF(string CPF)
         {
             return _deliveryMen.FirstOrDefault(x => x.CPF == CPF);
+        }
+
+        public DeliveryMan CreateDeliveryMan(DeliveryManRequest deliveryManRequest)
+        {
+            var deliveryMan = new DeliveryMan
+            {
+                Name = deliveryManRequest.Name,
+                LastName = deliveryManRequest.LastName,
+                Email = deliveryManRequest.Email,
+                PhoneNumber = deliveryManRequest.PhoneNumber,
+                CPF = deliveryManRequest.CPF,
+                Senha = deliveryManRequest.Senha,
+                DateBirth = deliveryManRequest.DateBirth
+            };
+
+            deliveryMan.Id = CreateId();
+
+            AddDeliveryMan(deliveryMan);
+
+            return deliveryMan;
         }
     }
 }
