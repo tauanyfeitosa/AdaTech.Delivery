@@ -15,12 +15,12 @@ namespace AdaTech._LoginMiddleware.WebAPI.Utilities.Middleware
         {
             var query = context.Request.Query;
 
-            if (context.Request.Path.Value.EndsWith("/byId", StringComparison.OrdinalIgnoreCase) && 
-                (!query.ContainsKey("id") || !int.TryParse(query["id"], out int _)))
+            if (context.Request.Path.Value.EndsWith("/byCPF", StringComparison.OrdinalIgnoreCase) && 
+                (!query.ContainsKey("cpf")))
             {
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
                 context.Response.ContentType = "application/json";
-                await context.Response.WriteAsync(JsonSerializer.Serialize(new { Message = "O parâmetro 'id' é obrigatório e deve ser um número inteiro." }));
+                await context.Response.WriteAsync(JsonSerializer.Serialize(new { Message = "O parâmetro 'cpf' é obrigatório." }));
                 return;
             }
             
@@ -39,6 +39,15 @@ namespace AdaTech._LoginMiddleware.WebAPI.Utilities.Middleware
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync(JsonSerializer.Serialize(new { Message = "Os parâmetros de consulta 'login' e 'senha' são obrigatórios." }));
+                return;
+            }
+
+            if (context.Request.Path.Value.EndsWith("/logout", StringComparison.OrdinalIgnoreCase) && 
+                               (!query.ContainsKey("cpf") || string.IsNullOrWhiteSpace(query["cpf"])))
+            {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                context.Response.ContentType = "application/json";
+                await context.Response.WriteAsync(JsonSerializer.Serialize(new { Message = "O parâmetro 'cpf' é obrigatório." }));
                 return;
             }
 
