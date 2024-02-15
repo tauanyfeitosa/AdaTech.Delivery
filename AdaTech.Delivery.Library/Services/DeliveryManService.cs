@@ -65,6 +65,10 @@ namespace AdaTech.Delivery.Library.Services
 
         public int CreateId()
         {
+            if (_deliveryMen.Count == 0)
+            {
+                return 1;
+            }
             return _deliveryMen.Max(x => x.Id) + 1; 
         }
 
