@@ -10,8 +10,6 @@ namespace AdaTech.Delivery.Library.ModelsBuilding
 {
     public class DeliveryManRequest
     {
-        [Key]
-        public int Id { get; set; }
 
         [Required(ErrorMessage = "O nome é obrigatório.")]
         [StringLength(50, ErrorMessage = "O nome não pode ter mais de 50 caracteres.")]

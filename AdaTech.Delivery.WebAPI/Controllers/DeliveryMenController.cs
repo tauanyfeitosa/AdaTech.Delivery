@@ -114,5 +114,19 @@ namespace AdaTech.Delivery.WebAPI.Controllers
             return Ok(new { token = encodedToken });
         }
 
+        [HttpPost("logout")]
+        public IActionResult Logout([FromQuery] string cpf)
+        {
+            var deliveryMan = _deliveryManService.GetDeliveryManByCPF(cpf);
+            if (deliveryMan == null)
+            {
+                throw new KeyNotFoundException($"Nenhum entregador encontrado com o CPF: {cpf}.");
+            }
+
+            deliveryMan.IsLogged = false;
+
+            return Ok("Logout realizado com sucesso.");
+        }
+
     }
 }
