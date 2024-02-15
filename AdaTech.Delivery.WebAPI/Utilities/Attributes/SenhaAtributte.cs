@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AdaTech.Delivery.Library.Utilities
+namespace AdaTech.Delivery.WebAPI.Utilities.Attributes
 {
     internal class SenhaAtributte: ValidationAttribute
     {

@@ -1,5 +1,4 @@
 ﻿using AdaTech.Delivery.Library.Models;
-using AdaTech.Delivery.Library.ModelsBuilding;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -79,24 +78,11 @@ namespace AdaTech.Delivery.Library.Services
             return _deliveryMen.FirstOrDefault(x => x.CPF == CPF);
         }
 
-        public DeliveryMan CreateDeliveryMan(DeliveryManRequest deliveryManRequest)
+        public void CreateDeliveryMan(DeliveryMan deliveryMan)
         {
-            var deliveryMan = new DeliveryMan
-            {
-                Name = deliveryManRequest.Name,
-                LastName = deliveryManRequest.LastName,
-                Email = deliveryManRequest.Email,
-                PhoneNumber = deliveryManRequest.PhoneNumber,
-                CPF = deliveryManRequest.CPF,
-                Senha = deliveryManRequest.Senha,
-                DateBirth = deliveryManRequest.DateBirth
-            };
-
             deliveryMan.Id = CreateId();
 
             AddDeliveryMan(deliveryMan);
-
-            return deliveryMan;
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace AdaTech.Delivery.Library.Utilities
+namespace AdaTech.Delivery.WebAPI.Utilities.Attributes
 {
     public class MaiorDeIdadeAttribute : ValidationAttribute
     {

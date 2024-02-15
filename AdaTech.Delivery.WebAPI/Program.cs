@@ -74,7 +74,7 @@ namespace AdaTech.Delivery.WebAPI
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddScoped<DeliveryManService>();
+            builder.Services.AddSingleton<DeliveryManService>();
 
             builder.Services.AddSwaggerGen(c =>
             {

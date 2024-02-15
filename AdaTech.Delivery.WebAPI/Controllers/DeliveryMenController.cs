@@ -1,5 +1,5 @@
 ﻿using AdaTech.Delivery.Library.Models;
-using AdaTech.Delivery.Library.ModelsBuilding;
+using AdaTech.Delivery.WebAPI.ModelsBuilding;
 using AdaTech.Delivery.Library.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
@@ -37,8 +37,18 @@ namespace AdaTech.Delivery.WebAPI.Controllers
         [HttpPost]
         public IActionResult PostDeliveryMan([FromBody] DeliveryManRequest deliveryManRequest)
         {
-
-            var deliveryMan = _deliveryManService.CreateDeliveryMan(deliveryManRequest);
+            var deliveryMan = new DeliveryMan
+            {
+                Name = deliveryManRequest.Name,
+                LastName = deliveryManRequest.LastName,
+                Email = deliveryManRequest.Email,
+                PhoneNumber = deliveryManRequest.PhoneNumber,
+                CPF = deliveryManRequest.CPF,
+                Senha = deliveryManRequest.Senha,
+                DateBirth = deliveryManRequest.DateBirth,
+            };
+            
+            _deliveryManService.CreateDeliveryMan(deliveryMan);
 
             return CreatedAtAction(nameof(GetDeliveryMan), new { id = deliveryMan.Id }, deliveryMan);
         }
